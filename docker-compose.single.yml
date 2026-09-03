@@ -1,0 +1,25 @@
+services:
+  api-single:
+    build: ./api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./files:/app/files
+    networks:
+      - app-net
+
+  locust:
+    build: ./loadtest
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./loadtest/results:/app/results
+    environment:
+      - LOCUST_HOST=http://api-single:8000
+    depends_on:
+      - api-single
+    networks:
+      - app-net
+
+networks:
+  app-net:

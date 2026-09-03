@@ -1,10 +1,8 @@
-import random
 from locust import HttpUser, task, between
 
 
 class FileUser(HttpUser):
     wait_time = between(0.1, 0.5)
-    sizes = ["1kb", "10kb", "1mb", "10mb", "100mb"]
 
     @task(3)
     def get_1kb(self):
@@ -25,7 +23,3 @@ class FileUser(HttpUser):
     @task(1)
     def get_100mb(self):
         self.client.get("/files/100mb", name="/files/100mb")
-
-    @task(5)
-    def health_check(self):
-        self.client.get("/health", name="/health")

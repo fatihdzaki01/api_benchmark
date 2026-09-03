@@ -7,6 +7,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-EXPOSE 8089
+RUN chmod +x run_headless.sh
 
-CMD ["locust", "-f", "locustfile.py", "--host=http://api-single:8000", "--web-host=0.0.0.0"]
+CMD ["sh", "/app/run_headless.sh"]

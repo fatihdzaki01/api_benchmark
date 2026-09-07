@@ -51,7 +51,7 @@ Benchmarking API file-serving untuk menemukan **batas kemampuan sistem** (sampai
 
 ## Cara Pakai (Headless Otomatis)
 
-Test dijalankan bertahap per jumlah user: **100 → 1000 → dst** (default `100,1000,10000`), tiap tahap `5m`. Otomatis berhenti saat sistem mulai jebol (error > 10% ATAU p99 > 60s). Setiap tahap menghasilkan `results/<prefix>_<users>_users.html` + satu `results/<prefix>_ringkasan_seconds.html`.
+Test dijalankan bertahap per jumlah user: **100 → 1000 → dst** (default `100,1000,10000`), tiap tahap `5m`. Otomatis berhenti saat sistem mulai jebol (error > 10% ATAU p95 > 60s). Setiap tahap menghasilkan `results/<prefix>_<users>_users.html` + satu `results/<prefix>_ringkasan_seconds.html`.
 
 > **PENTING**: saat test berjalan, jangan menjalankan aplikasi/tugas berat lain supaya hasil tidak terkontaminasi.
 
@@ -86,16 +86,16 @@ $env:LOCUST_RUN_TIME="5m"
 docker compose -f docker-compose.single.yml up --build locust
 docker compose -f docker-compose.single.yml down
 ```
-Variabel lain yang bisa di-override: `LOCUST_SPAWN_RATE` (default `auto` = users/60 per detik), `LOCUST_MAX_ERROR_PCT` (default 10), `LOCUST_MAX_P99_S` (default 60), `SCENARIO_PREFIX`.
+Variabel lain yang bisa di-override: `LOCUST_SPAWN_RATE` (default `auto` = users/60 per detik), `LOCUST_MAX_ERROR_PCT` (default 10), `LOCUST_MAX_P95_S` (default 60), `SCENARIO_PREFIX`.
 
 ## Hasil yang Dihasilkan
 1. **`results/<prefix>_<users>_users.html`** — laporan lengkap Locust: request count, RPS, error, dan distribusi response time per endpoint (grafik + tabel, dalam milidetik).
-2. **`results/<prefix>_ringkasan_seconds.html`** — tabel ringkasan agregat **semua latensi dalam satuan detik (s)**: p50, p75, p90, p95, p99, max, RPS, dan error %, untuk tiap jumlah user. Baris **BATAS** = user count di mana sistem sudah lewat batas.
+2. **`results/<prefix>_ringkasan_seconds.html`** — tabel ringkasan agregat **semua latensi dalam satuan detik (s)**: p50, p90, p95, RPS, dan error %, untuk tiap jumlah user. Baris **BATAS** = user count di mana sistem sudah lewat batas.
 
 ## Cara Baca / Cari Batas Sistem
 - Cari baris pertama berstatus **BATAS** di `_ringkasan_seconds.html`.
 - User count terakhir yang masih **OK** = batas kemampuan sistem sebelum error/latensi membengkak.
-- Bandingkan `s1_ringkasan_seconds.html` vs `s2_ringkasan_seconds.html`: di user berapa masing-masing masih OK, dan bagaimana p50/p90/p95/p99-nya.
+- Bandingkan `s1_ringkasan_seconds.html` vs `s2_ringkasan_seconds.html`: di user berapa masing-masing masih OK, dan bagaimana p50/p90/p95-nya.
 
 ## Output untuk Tugas (video + PDF)
 - **Video demo**: rekam proses menjalankan perintah S1 lalu S2 (step 2-3) dan buka file HTML hasilnya.

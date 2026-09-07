@@ -4,8 +4,8 @@ import os
 import re
 import sys
 
-PERCENTILES = ["50%", "66%", "75%", "80%", "90%", "95%", "98%", "99%", "99.9%", "99.99%", "100%"]
-DISPLAY_PERCENTILES = ["50%", "75%", "90%", "95%", "99%", "100%"]
+PERCENTILES = ["50%", "90%", "95%"]
+DISPLAY_PERCENTILES = ["50%", "90%", "95%"]
 
 
 def _num(value):
@@ -54,24 +54,24 @@ def row_stats(row):
 
 def read_thresholds():
     max_err = float(os.environ.get("LOCUST_MAX_ERROR_PCT", "10"))
-    max_p99_s = float(os.environ.get("LOCUST_MAX_P99_S", "60"))
-    return max_err, max_p99_s
+    max_p95_s = float(os.environ.get("LOCUST_MAX_P95_S", "60"))
+    return max_err, max_p95_s
 
 
 def cmd_check(path):
-    max_err, max_p99_s = read_thresholds()
+    max_err, max_p95_s = read_thresholds()
     st = row_stats(load_aggregated(path))
     if st is None:
         print("NO DATA - skip deteksi batas")
         sys.exit(0)
     over_err = st["error_pct"] > max_err
-    over_p99 = st["p_s"]["99%"] > max_p99_s
+    over_p95 = st["p_s"]["95%"] > max_p95_s
     print(
-        "aggregated: req=%d rps=%.2f error=%.2f%% p99=%.3fs "
-        "(limit error>%s%% | p99>%ss)"
-        % (st["requests"], st["rps"], st["error_pct"], st["p_s"]["99%"], max_err, max_p99_s)
+        "aggregated: req=%d rps=%.2f error=%.2f%% p95=%.3fs "
+        "(limit error>%s%% | p95>%ss)"
+        % (st["requests"], st["rps"], st["error_pct"], st["p_s"]["95%"], max_err, max_p95_s)
     )
-    sys.exit(1 if (over_err or over_p99) else 0)
+    sys.exit(1 if (over_err or over_p95) else 0)
 
 
 def users_from_path(path):
@@ -84,14 +84,14 @@ def fmt_seconds(value):
 
 
 def cmd_build(results_dir, prefix, paths):
-    max_err, max_p99_s = read_thresholds()
+    max_err, max_p95_s = read_thresholds()
     rows = []
     for p in paths:
         st = row_stats(load_aggregated(p))
         if st is None:
             continue
         users = users_from_path(p)
-        over = st["error_pct"] > max_err or st["p_s"]["99%"] > max_p99_s
+        over = st["error_pct"] > max_err or st["p_s"]["95%"] > max_p95_s
         rows.append(
             {
                 "users": users,
@@ -143,14 +143,14 @@ def cmd_build(results_dir, prefix, paths):
 </head>
 <body>
 <h1>Ringkasan Benchmark <code>{html.escape(prefix)}</code></h1>
-<p>Semua latensi dalam <strong>detik (s)</strong>. Ambang batas: error &gt; {max_err}% ATAU p99 &gt; {max_p99_s}s.</p>
+<p>Semua latensi dalam <strong>detik (s)</strong>. Ambang batas: error &gt; {max_err}% ATAU p95 &gt; {max_p95_s}s.</p>
 <table>
 <thead><tr><th>Users</th><th>RPS</th><th>Error %</th>{thead}<th>Status</th><th>Laporan</th></tr></thead>
 <tbody>
 {''.join(tbody)}
 </tbody>
 </table>
-<p class="note">Cara baca: cari baris pertama berstatus BATAS. User count terakhir yang masih OK = batas kemampuan sistem (sebelum error naik / latency p99 membengkak).</p>
+<p class="note">Cara baca: cari baris pertama berstatus BATAS. User count terakhir yang masih OK = batas kemampuan sistem (sebelum error naik / latency p95 membengkak).</p>
 </body>
 </html>
 """

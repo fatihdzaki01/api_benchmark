@@ -14,7 +14,7 @@
 #   LOCUST_SPAWN_RATE     "auto" (= users/60, ramp ~1 menit) atau angka tetap
 #   SCENARIO_PREFIX       prefix nama file, default "s1"
 #   LOCUST_MAX_ERROR_PCT  stop kalau error agregat > nilai ini (%), default 10
-#   LOCUST_MAX_P99_S      stop kalau p99 agregat > nilai ini (detik), default 60
+#   LOCUST_MAX_P95_S      stop kalau p95 agregat > nilai ini (detik), default 60
 #   RESULTS_DIR           folder hasil, default /app/results
 
 set -u
@@ -26,10 +26,10 @@ SPAWN="${LOCUST_SPAWN_RATE:-auto}"
 PREFIX="${SCENARIO_PREFIX:-s1}"
 RESULTS_DIR="${RESULTS_DIR:-/app/results}"
 MAX_ERR="${LOCUST_MAX_ERROR_PCT:-10}"
-MAX_P99="${LOCUST_MAX_P99_S:-60}"
+MAX_P95="${LOCUST_MAX_P95_S:-60}"
 
 export LOCUST_MAX_ERROR_PCT="$MAX_ERR"
-export LOCUST_MAX_P99_S="$MAX_P99"
+export LOCUST_MAX_P95_S="$MAX_P95"
 
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
@@ -43,7 +43,7 @@ echo "Users list    : $LIST"
 echo "Run time      : $RUN_TIME per run"
 echo "Spawn rate    : $SPAWN  (auto = users/60/s)"
 echo "Prefix        : $PREFIX"
-echo "Stop jika     : error > ${MAX_ERR}%  ATAU  p99 > ${MAX_P99}s"
+echo "Stop jika     : error > ${MAX_ERR}%  ATAU  p95 > ${MAX_P95}s"
 echo "Results dir   : $RESULTS_DIR"
 echo
 

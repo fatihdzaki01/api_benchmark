@@ -1,4 +1,15 @@
+import time
+
+from requests.exceptions import RequestException
+
 from locust import HttpUser, task, between
+from locust import stats as locust_stats
+from locust import html as locust_html
+
+locust_stats.PERCENTILES_TO_REPORT = [0.50, 0.90, 0.95]
+locust_html.PERCENTILES_FOR_HTML_REPORT = [0.50, 0.90, 0.95]
+
+CHUNK_SIZE = 65536
 
 
 class FileUser(HttpUser):
@@ -6,20 +17,40 @@ class FileUser(HttpUser):
 
     @task(3)
     def get_1kb(self):
-        self.client.get("/files/1kb", name="/files/1kb")
+        self._download("/files/1kb")
 
     @task(3)
     def get_10kb(self):
-        self.client.get("/files/10kb", name="/files/10kb")
+        self._download("/files/10kb")
 
     @task(2)
     def get_1mb(self):
-        self.client.get("/files/1mb", name="/files/1mb")
+        self._download("/files/1mb")
 
     @task(1)
     def get_10mb(self):
-        self.client.get("/files/10mb", name="/files/10mb")
+        self._download("/files/10mb")
 
     @task(1)
     def get_100mb(self):
-        self.client.get("/files/100mb", name="/files/100mb")
+        self._download("/files/100mb")
+
+    def _download(self, path):
+        start = time.perf_counter()
+        with self.client.get(path, name=path, stream=True, catch_response=True) as response:
+            try:
+                if response.status_code != 200:
+                    response.request_meta["response_time"] = (time.perf_counter() - start) * 1000
+                    response.failure("HTTP %d" % response.status_code)
+                    response.close()
+                else:
+                    total = 0
+                    for chunk in response.iter_content(CHUNK_SIZE):
+                        total += len(chunk)
+                    response.request_meta["response_time"] = (time.perf_counter() - start) * 1000
+                    response.request_meta["response_length"] = total
+                    response.success()
+            except RequestException as exc:
+                response.request_meta["response_time"] = (time.perf_counter() - start) * 1000
+                response.failure(exc)
+                response.close()
